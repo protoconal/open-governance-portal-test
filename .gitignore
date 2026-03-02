@@ -1,0 +1,34 @@
+# ── .NET / C# ──────────────────────────────────────────────────────────────
+# Build outputs
+**/bin/
+**/obj/
+
+# NuGet packages (restored on build)
+**/packages/
+*.nupkg
+*.nuspec
+
+# User-specific files
+*.user
+*.suo
+.vs/
+
+# ── Node / Svelte ──────────────────────────────────────────────────────────
+node_modules/
+.svelte-kit/
+build/
+dist/
+
+# Environment files with secrets — keep only .env.example in source control
+src/frontend/.env.local
+src/frontend/.env.*.local
+
+# ── SQLite databases ────────────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+
+# ── OS / editor ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
