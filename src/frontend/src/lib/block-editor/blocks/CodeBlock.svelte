@@ -62,7 +62,6 @@
     placeholder="Paste or type your code here…"
     aria-label="Code editor{block.data.language ? `, language: ${block.data.language}` : ''}"
     spellcheck="false"
-    autocorrect="off"
     autocapitalize="off"
     rows="6"
   ></textarea>

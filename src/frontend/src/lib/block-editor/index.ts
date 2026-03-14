@@ -22,7 +22,6 @@ export type {
   Block,
   BlockId,
   BlockType,
-  BlockData,
   BlockMeta,
   BlockCategory,
   BlockDefinition,

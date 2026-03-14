@@ -62,6 +62,7 @@ export class TinyMCEAdapter implements EditorAdapter {
        (npm package), then fall back to window.tinymce (CDN). */
     let tinymce: TinyMCEGlobal;
     try {
+      // @ts-ignore — optional peer dependency
       const mod = await import('tinymce');
       tinymce = (mod.default ?? mod) as TinyMCEGlobal;
     } catch {

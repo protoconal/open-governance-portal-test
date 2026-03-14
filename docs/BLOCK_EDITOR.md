@@ -323,3 +323,69 @@ remains the safest bet.
 - [ ] Plugin marketplace for community block types
 - [ ] Real-time preview mode (read-only render)
 - [ ] Additional adapter: Tiptap, ProseMirror raw
+
+---
+
+## Client-Side Rendering (CSR) & WebSocket Architecture
+
+The frontend runs as a **pure CSR single-page application**.  SvelteKit
+is configured with `adapter-static` and `ssr = false` so that:
+
+- All HTML is rendered in the browser.
+- Data is fetched at runtime via the REST API and WebSockets.
+- The built output is a set of static files deployable to any CDN or
+  file server.
+
+### WebSocket Infrastructure
+
+A lightweight WebSocket client (`$lib/realtime`) provides:
+
+| Feature | Implementation |
+|---------|---------------|
+| Typed message envelopes | `WsMessage<T>` with type, payload, timestamp |
+| Event subscriptions | `on('event', callback)` / `off()` / `on('*', …)` |
+| Auto-reconnect | Configurable interval and max attempts |
+| Svelte stores | `wsState`, `wsStatusMessage` for reactive UI |
+| Auth support | Token passed as query parameter on connect |
+
+```typescript
+import { getWsClient } from '$lib/realtime';
+
+const ws = getWsClient();
+ws.connect();
+ws.on('block:update', (msg) => { /* handle real-time block update */ });
+ws.send('cursor:move', { blockId: '…', position: 42 });
+```
+
+### Mattermost Chat Integration
+
+The `$lib/chat` module provides a complete Mattermost integration:
+
+- **MattermostClient** — REST API v4 + WebSocket client for channels,
+  messages, and user presence.
+- **ChatPanel** — Drop-in Svelte component with channel selector,
+  message list, and input.
+- **Real-time delivery** — New messages arrive via WebSocket and are
+  appended to the store instantly.
+
+```svelte
+<script>
+  import { ChatPanel } from '$lib/chat';
+</script>
+
+<ChatPanel config={{
+  serverUrl: 'https://mattermost.example.com',
+  wsUrl: 'wss://mattermost.example.com/api/v4/websocket',
+  token: 'your-access-token',
+  teamId: 'team-id',
+}} />
+```
+
+Environment variables (`.env`):
+
+```
+VITE_MATTERMOST_URL=https://mattermost.example.com
+VITE_MATTERMOST_WS_URL=wss://mattermost.example.com/api/v4/websocket
+VITE_MATTERMOST_TOKEN=your-personal-access-token
+VITE_MATTERMOST_TEAM_ID=your-team-id
+```

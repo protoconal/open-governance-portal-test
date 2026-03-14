@@ -21,6 +21,8 @@
   import BlockToolbar from './BlockToolbar.svelte';
   import EditorSelector from './EditorSelector.svelte';
 
+  import type { Component } from 'svelte';
+
   /* Import built-in block components */
   import TextBlock from '../blocks/TextBlock.svelte';
   import HeadingBlock from '../blocks/HeadingBlock.svelte';
@@ -35,7 +37,8 @@
    * mutable so optional plugins (like D3 graph) can add entries without
    * modifying this file.
    */
-  const blockComponents: Record<string, unknown> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blockComponents: Record<string, Component<any>> = {
     text: TextBlock,
     heading: HeadingBlock,
     image: ImageBlock,
@@ -48,7 +51,8 @@
    */
   export function registerBlockComponent(
     type: string,
-    component: unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    component: Component<any>,
   ): void {
     blockComponents[type] = component;
   }

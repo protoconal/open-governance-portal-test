@@ -13,7 +13,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { BlockType, BlockDefinition, BlockData } from './types';
+import type { BlockType, BlockDefinition } from './types';
 
 // ── Store ─────────────────────────────────────────────────────────────────
 
@@ -39,8 +39,8 @@ export const blockDefinitionMap = derived(_registry, ($r) => new Map($r));
  *
  * @throws If a block with the same `type` key is already registered.
  */
-export function registerBlock<T extends BlockData>(
-  definition: BlockDefinition<T>,
+export function registerBlock(
+  definition: BlockDefinition,
 ): void {
   _registry.update((map) => {
     if (map.has(definition.type)) {
@@ -50,7 +50,7 @@ export function registerBlock<T extends BlockData>(
       );
     }
     const next = new Map(map);
-    next.set(definition.type, definition as BlockDefinition);
+    next.set(definition.type, definition);
     return next;
   });
 }

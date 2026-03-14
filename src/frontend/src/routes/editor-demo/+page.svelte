@@ -6,8 +6,11 @@
   • The optional D3 graph plugin loaded at runtime.
   • Editor adapter selector (base / milkdown / tinymce).
   • Export to HTML / JSON.
+  • Mattermost chat integration sidebar.
 
   This page serves as both a demo and an integration test surface.
+  The app runs as a CSR (client-side rendered) SPA and pulls data
+  through REST and WebSocket connections.
 
   Traceability: ADR-005 — Block Editor Architecture
 -->
@@ -20,13 +23,36 @@
     documentToHTML,
     documentToJSON,
   } from '$lib/block-editor';
+  import type { BlockDocument } from '$lib/block-editor';
 
   /* Optional D3 Graph plugin — imported separately to demonstrate
      the opt-in pattern.  Remove this import to exclude the plugin. */
   import { registerD3GraphBlock, D3GraphBlock } from '$lib/block-editor/plugins/d3-graph';
 
+  /* Mattermost chat integration */
+  import { ChatPanel } from '$lib/chat';
+  import type { MattermostConfig } from '$lib/chat';
+
+  /* WebSocket infrastructure */
+  import { wsState, wsStatusMessage } from '$lib/realtime';
+
   let exportOutput = '';
   let exportFormat: 'html' | 'json' = 'html';
+  let showChat = false;
+
+  /* Build Mattermost config from environment variables (if set) */
+  const mattermostConfig: MattermostConfig | null = (() => {
+    const serverUrl = import.meta.env.VITE_MATTERMOST_URL;
+    const wsUrl = import.meta.env.VITE_MATTERMOST_WS_URL;
+    const token = import.meta.env.VITE_MATTERMOST_TOKEN;
+    if (!serverUrl || !token) return null;
+    return {
+      serverUrl,
+      wsUrl: wsUrl || serverUrl.replace(/^http/, 'ws') + '/api/v4/websocket',
+      token,
+      teamId: import.meta.env.VITE_MATTERMOST_TEAM_ID || undefined,
+    };
+  })();
 
   onMount(() => {
     /* Register built-in block types */
@@ -34,19 +60,6 @@
 
     /* Register the optional D3 graph plugin */
     registerD3GraphBlock();
-
-    /**
-     * Register the D3 graph component so the BlockEditor knows how to
-     * render it.  In a real app this would be done via a plugin init
-     * hook; here we reach into the BlockEditor's exported method.
-     */
-    const editorEl = document.querySelector('.block-editor');
-    if (editorEl) {
-      // The component registration is handled via the BlockEditor's
-      // registerBlockComponent export — accessed through bind:this
-      // in production.  For the demo we rely on the component map
-      // being set up below in the bind:this handler.
-    }
   });
 
   let editorComponent: BlockEditor;
@@ -57,12 +70,13 @@
   }
 
   function exportDocument(): void {
-    let doc: { id: string; title: string; blocks: unknown[]; createdAt: string; updatedAt: string };
+    let doc: BlockDocument | undefined;
     blockDocument.subscribe((d) => (doc = d))();
+    if (!doc) return;
     exportOutput =
       exportFormat === 'html'
-        ? documentToHTML(doc!)
-        : documentToJSON(doc!);
+        ? documentToHTML(doc)
+        : documentToJSON(doc);
   }
 </script>
 
@@ -72,45 +86,77 @@
 
 <section class="demo-page">
   <header class="demo-header">
-    <h1>Block Editor Demo</h1>
-    <p class="demo-subtitle">
-      A block-based WYSIWYG editing interface with interchangeable editors
-      and optional D3.js graph visualisation.
-    </p>
-  </header>
+    <div class="header-text">
+      <h1>Block Editor Demo</h1>
+      <p class="demo-subtitle">
+        A block-based WYSIWYG editing interface with interchangeable editors,
+        optional D3.js graph visualisation, and real-time Mattermost chat.
+      </p>
+    </div>
 
-  <BlockEditor bind:this={editorComponent} />
+    <div class="header-actions">
+      <!-- WebSocket status -->
+      <span class="ws-status" role="status" aria-live="polite">
+        <span class="sr-only">{$wsStatusMessage}</span>
+      </span>
 
-  <!-- Export panel -->
-  <details class="export-panel">
-    <summary>Export document</summary>
-    <div class="export-controls">
-      <fieldset class="export-format" role="radiogroup" aria-label="Export format">
-        <legend class="sr-only">Export format</legend>
-        <label>
-          <input type="radio" bind:group={exportFormat} value="html" />
-          HTML
-        </label>
-        <label>
-          <input type="radio" bind:group={exportFormat} value="json" />
-          JSON
-        </label>
-      </fieldset>
-      <button class="export-btn" on:click={exportDocument}>
-        Export
+      <!-- Chat toggle -->
+      <button
+        class="chat-toggle"
+        on:click={() => (showChat = !showChat)}
+        aria-expanded={showChat}
+        aria-controls="chat-sidebar"
+        aria-label="{showChat ? 'Hide' : 'Show'} chat panel"
+      >
+        💬 {showChat ? 'Hide Chat' : 'Show Chat'}
       </button>
     </div>
-    {#if exportOutput}
-      <label for="export-output" class="sr-only">Exported document</label>
-      <textarea
-        id="export-output"
-        class="export-output"
-        readonly
-        rows="12"
-        aria-label="Exported {exportFormat.toUpperCase()} output"
-      >{exportOutput}</textarea>
+  </header>
+
+  <div class="demo-layout">
+    <!-- Main editor area -->
+    <div class="editor-area">
+      <BlockEditor bind:this={editorComponent} />
+
+      <!-- Export panel -->
+      <details class="export-panel">
+        <summary>Export document</summary>
+        <div class="export-controls">
+          <fieldset class="export-format" role="radiogroup" aria-label="Export format">
+            <legend class="sr-only">Export format</legend>
+            <label>
+              <input type="radio" bind:group={exportFormat} value="html" />
+              HTML
+            </label>
+            <label>
+              <input type="radio" bind:group={exportFormat} value="json" />
+              JSON
+            </label>
+          </fieldset>
+          <button class="export-btn" on:click={exportDocument}>
+            Export
+          </button>
+        </div>
+        {#if exportOutput}
+          <label for="export-output" class="sr-only">Exported document</label>
+          <textarea
+            id="export-output"
+            class="export-output"
+            readonly
+            rows="12"
+            aria-label="Exported {exportFormat.toUpperCase()} output"
+          >{exportOutput}</textarea>
+        {/if}
+      </details>
+    </div>
+
+    <!-- Chat sidebar -->
+    {#if showChat}
+      <aside id="chat-sidebar" class="chat-sidebar" aria-label="Chat sidebar">
+        <ChatPanel config={mattermostConfig} />
+      </aside>
     {/if}
-  </details>
+  </div>
 </section>
 
 <style>
@@ -121,7 +167,16 @@
   }
 
   .demo-header {
-    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .header-text {
+    flex: 1;
+    min-width: 200px;
   }
 
   .demo-header h1 {
@@ -135,6 +190,67 @@
     color: var(--color-muted, #64748b);
     font-size: 1.05rem;
     max-width: 60ch;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .chat-toggle {
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 0.375rem;
+    background: var(--color-surface, #ffffff);
+    color: inherit;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease;
+    white-space: nowrap;
+  }
+
+  .chat-toggle:hover {
+    background: #f1f5f9;
+    border-color: var(--color-accent, #3b82f6);
+  }
+
+  .chat-toggle:focus-visible {
+    outline: 2px solid var(--color-accent, #3b82f6);
+    outline-offset: 2px;
+  }
+
+  .demo-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .editor-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .chat-sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 5rem;
+  }
+
+  @media (max-width: 900px) {
+    .demo-layout {
+      flex-direction: column;
+    }
+    .chat-sidebar {
+      width: 100%;
+      position: static;
+    }
   }
 
   .export-panel {

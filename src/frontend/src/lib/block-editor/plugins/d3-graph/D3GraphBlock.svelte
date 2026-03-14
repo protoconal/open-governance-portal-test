@@ -30,7 +30,7 @@
   export let block: Block<D3GraphBlockData>;
 
   let svgContainer: HTMLDivElement;
-  let simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null;
+  let simulation: d3.Simulation<d3.SimulationNodeDatum & GraphNode, undefined> | null = null;
 
   // Node / edge form state
   let newNodeLabel = '';

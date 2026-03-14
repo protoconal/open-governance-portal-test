@@ -45,17 +45,24 @@ export class MilkdownAdapter implements EditorAdapter {
     this.content = config.initialContent;
 
     try {
-      /* Dynamic imports — tree-shaken when the adapter is unused. */
-      const { Editor, rootCtx, defaultValueCtx, editorViewCtx } =
-        await import('@milkdown/kit/core');
-      const { commonmark } = await import('@milkdown/kit/preset/commonmark');
-      const { listener, listenerCtx } = await import(
-        '@milkdown/kit/plugin/listener'
-      );
-      const { nord } = await import('@milkdown/kit/theme/nord');
+      /* Dynamic imports — tree-shaken when the adapter is unused.
+         These packages are optional peer dependencies; if they are not
+         installed the catch block below produces a descriptive error. */
+      // @ts-ignore — optional peer dependency
+      const milkdownCore = await import('@milkdown/kit/core');
+      const { Editor, rootCtx, defaultValueCtx } = milkdownCore;
+      // @ts-ignore — optional peer dependency
+      const milkdownPreset = await import('@milkdown/kit/preset/commonmark');
+      const { commonmark } = milkdownPreset;
+      // @ts-ignore — optional peer dependency
+      const milkdownListener = await import('@milkdown/kit/plugin/listener');
+      const { listener, listenerCtx } = milkdownListener;
+      // @ts-ignore — optional peer dependency
+      const milkdownTheme = await import('@milkdown/kit/theme/nord');
+      const { nord } = milkdownTheme;
 
       const editor = await Editor.make()
-        .config((ctx) => {
+        .config((ctx: { set: (key: unknown, value: unknown) => void }) => {
           ctx.set(rootCtx, config.container);
           ctx.set(defaultValueCtx, config.initialContent);
           ctx.set(listenerCtx, {
@@ -72,7 +79,7 @@ export class MilkdownAdapter implements EditorAdapter {
         .use(listener)
         .create();
 
-      this.editorInstance = { editor, editorViewCtx };
+      this.editorInstance = { editor };
 
       /* WCAG: ensure the editable area has proper ARIA attributes */
       const editable = config.container.querySelector('[contenteditable]');

@@ -19,12 +19,6 @@ export type BlockType = string;
 // ── Block Data ────────────────────────────────────────────────────────────
 
 /**
- * Base constraint for block-specific data payloads.
- * Every block type defines its own data shape that extends this.
- */
-export type BlockData = Record<string, unknown>;
-
-/**
  * Metadata attached to every block instance.  Metadata is editor-managed
  * and should not be edited directly by block implementations.
  */
@@ -38,9 +32,14 @@ export interface BlockMeta {
 /**
  * A single content block within a document.
  *
+ * The generic parameter T is unconstrained so that concrete block data
+ * interfaces (e.g. `{ html: string }`) can be used directly without
+ * needing an explicit index signature.
+ *
  * @typeParam T - The data shape specific to this block type.
  */
-export interface Block<T extends BlockData = BlockData> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface Block<T = any> {
   /** Unique identifier for this block instance. */
   id: BlockId;
   /** The block type key — must match a registered BlockDefinition. */
@@ -60,8 +59,11 @@ export type BlockCategory = 'text' | 'media' | 'embed' | 'data' | 'layout' | 'cu
  * A block definition describes a *type* of block that can be inserted into
  * a document.  Definitions are registered in the BlockRegistry and drive
  * the insertion toolbar, serialisation, and rendering logic.
+ *
+ * @typeParam T - The data shape this block type works with.
  */
-export interface BlockDefinition<T extends BlockData = BlockData> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface BlockDefinition<T = any> {
   /** Machine-readable type key.  Must be unique across all registrations. */
   type: BlockType;
   /** Human-readable name shown in the insertion toolbar. */

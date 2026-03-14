@@ -9,7 +9,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Block, BlockData, BlockDocument, BlockId, BlockType } from './types';
+import type { Block, BlockDocument, BlockId, BlockType } from './types';
 import { getBlockDefinition } from './registry';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ export function removeBlock(id: BlockId): boolean {
 /**
  * Update the data payload of a specific block.
  */
-export function updateBlockData<T extends BlockData>(
+export function updateBlockData<T>(
   id: BlockId,
   updater: (current: T) => T,
 ): void {
