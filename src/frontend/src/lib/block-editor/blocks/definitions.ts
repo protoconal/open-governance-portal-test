@@ -47,7 +47,14 @@ export const textBlockDef: BlockDefinition<TextBlockData> = {
   defaultData: () => ({ html: '' }),
   toHTML: (data) => `<div class="block-text">${data.html}</div>`,
   ariaLabel: (data) => {
-    const plain = data.html.replace(/<[^>]*>/g, '').slice(0, 80);
+    // Strip HTML tags iteratively to handle any residual fragments
+    let plain = data.html;
+    let prev = '';
+    while (prev !== plain) {
+      prev = plain;
+      plain = plain.replace(/<[^>]*>/g, '');
+    }
+    plain = plain.slice(0, 80).trim();
     return plain ? `Text block: ${plain}` : 'Empty text block';
   },
 };
