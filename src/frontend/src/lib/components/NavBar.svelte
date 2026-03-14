@@ -2,7 +2,7 @@
   components/NavBar.svelte — Top navigation bar.
 
   Dynamically renders a link for every governance module so new modules
-  added in Strapi automatically appear in the nav.
+  added in Directus automatically appear in the nav.
 
   Traceability: ADR-004, ADR-006
 -->

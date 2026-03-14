@@ -1,18 +1,13 @@
-# ── Node / SvelteKit / Strapi ──────────────────────────────────────────────
+# ── Node / SvelteKit / Directus ─────────────────────────────────────────────
 node_modules/
 .svelte-kit/
 build/
 dist/
 
-# Strapi build artefacts and runtime data
-src/backend/.tmp/
-src/backend/dist/
-src/backend/build/
-src/backend/.strapi/
-src/backend/.strapi-updater.json
-src/backend/.strapi-cloud.json
-src/backend/exports/
-src/backend/license.txt
+# Directus runtime data and uploads
+src/backend/data/
+src/backend/uploads/
+src/backend/extensions/
 
 # Environment files with secrets — keep only .env.example in source control
 src/frontend/.env.local

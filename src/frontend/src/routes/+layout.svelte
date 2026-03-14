@@ -3,7 +3,7 @@
 
   Responsibilities
   ────────────────
-  1. Load governance module manifests from Strapi on first render.
+  1. Load governance module manifests from Directus on first render.
   2. Render the persistent NavBar.
   3. Provide CSS custom properties (design tokens) used by all components.
 
@@ -30,7 +30,7 @@
 
 {#if $pluginsError}
   <div class="global-error" role="alert">
-    ⚠️ Could not load modules from Strapi: {$pluginsError}.
+    ⚠️ Could not load modules from Directus: {$pluginsError}.
     Ensure the backend is running at the configured address.
   </div>
 {/if}

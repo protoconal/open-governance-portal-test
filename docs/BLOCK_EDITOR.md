@@ -1,7 +1,7 @@
 # Block Editor Architecture
 
 > Traceability tag: ADR-005
-> Relates to: ADR-001, ADR-004
+> Relates to: ADR-004, ADR-006
 
 ---
 
@@ -318,7 +318,7 @@ remains the safest bet.
 - [ ] Collaborative editing via CRDT (Yjs integration with Milkdown/Tiptap)
 - [ ] Drag-and-drop block reordering
 - [ ] Block templates / presets
-- [ ] Backend persistence API (`POST /api/documents`)
+- [ ] Backend persistence API (Directus collection for block documents)
 - [ ] Version history / undo stack per document
 - [ ] Plugin marketplace for community block types
 - [ ] Real-time preview mode (read-only render)

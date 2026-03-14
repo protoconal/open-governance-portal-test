@@ -3,7 +3,7 @@
 
   Props
   ─────
-  manifest  PluginManifest  The module's metadata from Strapi.
+  manifest  PluginManifest  The module's metadata from Directus.
 
   Traceability: ADR-004, ADR-006
 -->

@@ -3,8 +3,8 @@
 
   This single route handles ALL governance modules.  The page:
     1. Looks up the module manifest from the store by moduleId.
-    2. Displays the module's name, description, and Strapi API information.
-    3. Provides a link to the Strapi admin panel for content management.
+    2. Displays the module's name, description, and Directus API information.
+    3. Provides a link to the Directus admin panel for content management.
 
   In a fully-built application, this page would dynamically import a
   module-specific Svelte component (e.g. a meetings calendar, finance
@@ -44,9 +44,9 @@
     </header>
 
     <section class="api-info">
-      <h2>Strapi REST API</h2>
+      <h2>Directus REST API</h2>
       <p>
-        This module's data is available via Strapi at
+        This module's data is available via Directus at
         <code class="endpoint">{API_BASE}{manifest.apiPrefix}</code>.
       </p>
       <a
@@ -55,7 +55,7 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        Open Strapi Admin Panel ↗
+        Open Directus Admin Panel ↗
       </a>
     </section>
 

@@ -1,0 +1,476 @@
+# Directus Schema Snapshot — Open Governance Portal
+#
+# This file defines the custom collections (tables) for the governance
+# portal.  Apply it with:
+#
+#   npx directus schema apply ./snapshots/schema.yaml
+#
+# To regenerate after making changes in the Directus admin UI:
+#
+#   npx directus schema snapshot ./snapshots/schema.yaml --format yaml
+#
+# Traceability: ADR-006 — Migration to Directus headless CMS
+
+collections:
+  # ── Governance Modules ───────────────────────────────────────────────
+  # Registry of active modules shown on the dashboard and in navigation.
+  # Replaces the former IPlugin / PluginManifest from the ASP.NET era.
+  - collection: governance_modules
+    meta:
+      collection: governance_modules
+      icon: apps
+      note: "Registry of governance modules (dashboard + navigation)"
+      singleton: false
+      sort_field: sort
+      hidden: false
+    schema:
+      name: governance_modules
+
+  # ── Meetings (Scheduling module) ─────────────────────────────────────
+  - collection: meetings
+    meta:
+      collection: meetings
+      icon: event
+      note: "Scheduling module — meetings and events"
+      singleton: false
+      hidden: false
+    schema:
+      name: meetings
+
+  # ── Transactions (Finances module) ───────────────────────────────────
+  - collection: transactions
+    meta:
+      collection: transactions
+      icon: payments
+      note: "Finances module — income and expense records"
+      singleton: false
+      hidden: false
+    schema:
+      name: transactions
+
+  # ── Members (Members module) ─────────────────────────────────────────
+  - collection: members
+    meta:
+      collection: members
+      icon: people
+      note: "Members module — organisation member directory"
+      singleton: false
+      hidden: false
+    schema:
+      name: members
+
+fields:
+  # ── governance_modules fields ────────────────────────────────────────
+  - collection: governance_modules
+    field: id
+    type: integer
+    meta:
+      hidden: true
+      interface: input
+      readonly: true
+    schema:
+      is_primary_key: true
+      has_auto_increment: true
+
+  - collection: governance_modules
+    field: sort
+    type: integer
+    meta:
+      interface: input
+      hidden: true
+
+  - collection: governance_modules
+    field: status
+    type: string
+    meta:
+      interface: select-dropdown
+      display: labels
+      width: half
+      options:
+        choices:
+          - text: Published
+            value: published
+          - text: Draft
+            value: draft
+          - text: Archived
+            value: archived
+    schema:
+      default_value: draft
+
+  - collection: governance_modules
+    field: module_id
+    type: string
+    meta:
+      interface: input
+      width: half
+      required: true
+      note: "URL-safe unique key (e.g. 'scheduling')"
+    schema:
+      is_unique: true
+      is_nullable: false
+      max_length: 100
+
+  - collection: governance_modules
+    field: display_name
+    type: string
+    meta:
+      interface: input
+      width: half
+      required: true
+    schema:
+      is_nullable: false
+      max_length: 120
+
+  - collection: governance_modules
+    field: description
+    type: text
+    meta:
+      interface: input-multiline
+      width: full
+
+  - collection: governance_modules
+    field: version
+    type: string
+    meta:
+      interface: input
+      width: half
+    schema:
+      default_value: "1.0.0"
+      max_length: 30
+
+  - collection: governance_modules
+    field: icon
+    type: string
+    meta:
+      interface: input
+      width: half
+      note: "Emoji or Material icon name"
+    schema:
+      default_value: "📋"
+      max_length: 30
+
+  - collection: governance_modules
+    field: enabled
+    type: boolean
+    meta:
+      interface: boolean
+      width: half
+    schema:
+      default_value: true
+
+  - collection: governance_modules
+    field: date_created
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-created
+
+  - collection: governance_modules
+    field: date_updated
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-updated
+
+  # ── meetings fields ──────────────────────────────────────────────────
+  - collection: meetings
+    field: id
+    type: integer
+    meta:
+      hidden: true
+      interface: input
+      readonly: true
+    schema:
+      is_primary_key: true
+      has_auto_increment: true
+
+  - collection: meetings
+    field: status
+    type: string
+    meta:
+      interface: select-dropdown
+      display: labels
+      width: half
+      options:
+        choices:
+          - text: Published
+            value: published
+          - text: Draft
+            value: draft
+          - text: Archived
+            value: archived
+    schema:
+      default_value: draft
+
+  - collection: meetings
+    field: title
+    type: string
+    meta:
+      interface: input
+      required: true
+    schema:
+      is_nullable: false
+      max_length: 200
+
+  - collection: meetings
+    field: starts_at
+    type: timestamp
+    meta:
+      interface: datetime
+      width: half
+      required: true
+    schema:
+      is_nullable: false
+
+  - collection: meetings
+    field: ends_at
+    type: timestamp
+    meta:
+      interface: datetime
+      width: half
+
+  - collection: meetings
+    field: location
+    type: string
+    meta:
+      interface: input
+    schema:
+      max_length: 300
+
+  - collection: meetings
+    field: notes
+    type: text
+    meta:
+      interface: input-rich-text-md
+
+  - collection: meetings
+    field: date_created
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-created
+
+  - collection: meetings
+    field: date_updated
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-updated
+
+  # ── transactions fields ──────────────────────────────────────────────
+  - collection: transactions
+    field: id
+    type: integer
+    meta:
+      hidden: true
+      interface: input
+      readonly: true
+    schema:
+      is_primary_key: true
+      has_auto_increment: true
+
+  - collection: transactions
+    field: status
+    type: string
+    meta:
+      interface: select-dropdown
+      display: labels
+      width: half
+      options:
+        choices:
+          - text: Published
+            value: published
+          - text: Draft
+            value: draft
+          - text: Archived
+            value: archived
+    schema:
+      default_value: draft
+
+  - collection: transactions
+    field: amount
+    type: decimal
+    meta:
+      interface: input
+      width: half
+      required: true
+    schema:
+      is_nullable: false
+      numeric_precision: 10
+      numeric_scale: 2
+
+  - collection: transactions
+    field: category
+    type: string
+    meta:
+      interface: select-dropdown
+      width: half
+      required: true
+      options:
+        choices:
+          - text: Income
+            value: income
+          - text: Expense
+            value: expense
+          - text: Transfer
+            value: transfer
+    schema:
+      is_nullable: false
+      default_value: expense
+
+  - collection: transactions
+    field: description
+    type: string
+    meta:
+      interface: input
+    schema:
+      max_length: 300
+
+  - collection: transactions
+    field: date
+    type: date
+    meta:
+      interface: datetime
+      width: half
+      required: true
+    schema:
+      is_nullable: false
+
+  - collection: transactions
+    field: reference
+    type: string
+    meta:
+      interface: input
+      width: half
+    schema:
+      max_length: 100
+
+  - collection: transactions
+    field: date_created
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-created
+
+  - collection: transactions
+    field: date_updated
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-updated
+
+  # ── members fields ───────────────────────────────────────────────────
+  - collection: members
+    field: id
+    type: integer
+    meta:
+      hidden: true
+      interface: input
+      readonly: true
+    schema:
+      is_primary_key: true
+      has_auto_increment: true
+
+  - collection: members
+    field: status
+    type: string
+    meta:
+      interface: select-dropdown
+      display: labels
+      width: half
+      options:
+        choices:
+          - text: Published
+            value: published
+          - text: Draft
+            value: draft
+          - text: Archived
+            value: archived
+    schema:
+      default_value: draft
+
+  - collection: members
+    field: full_name
+    type: string
+    meta:
+      interface: input
+      required: true
+    schema:
+      is_nullable: false
+      max_length: 200
+
+  - collection: members
+    field: email
+    type: string
+    meta:
+      interface: input
+      width: half
+      required: true
+    schema:
+      is_nullable: false
+      is_unique: true
+      max_length: 254
+
+  - collection: members
+    field: role
+    type: string
+    meta:
+      interface: input
+      width: half
+    schema:
+      default_value: Member
+      max_length: 100
+
+  - collection: members
+    field: active
+    type: boolean
+    meta:
+      interface: boolean
+      width: half
+    schema:
+      default_value: true
+
+  - collection: members
+    field: joined_at
+    type: date
+    meta:
+      interface: datetime
+      width: half
+
+  - collection: members
+    field: date_created
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-created
+
+  - collection: members
+    field: date_updated
+    type: timestamp
+    meta:
+      interface: datetime
+      readonly: true
+      hidden: true
+      special:
+        - date-updated
