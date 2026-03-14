@@ -1,15 +1,16 @@
 # Architecture Overview
 
 > Traceability tag: ARCH-001
-> Last updated: 2025 (prototype)
+> Relates to: ADR-004, ADR-005, ADR-006
+> Last updated: 2025
 
 ---
 
 ## Goals
 
 1. Provide an extensible, web-based governance platform for organisations.
-2. Keep the host application small; all functional modules are plugins.
-3. Support any relational database without code changes (ADR-002).
+2. Eliminate custom backend code — use a headless CMS for content and API.
+3. Support multiple relational databases without code changes.
 4. Give beginners a clear, navigable codebase with documented reasoning.
 
 ---
@@ -17,44 +18,49 @@
 ## High-Level Component Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Browser / Client                             │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │                  SvelteKit Frontend                          │   │
-│  │                                                              │   │
-│  │  ┌──────────┐  ┌─────────────────┐  ┌────────────────────┐  │   │
-│  │  │ NavBar   │  │  Dashboard page │  │  Plugin page [id]  │  │   │
-│  │  └──────────┘  └─────────────────┘  └────────────────────┘  │   │
-│  │                                                              │   │
-│  │  Plugin Registry (Svelte store) ─── API Client              │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-│                             │ HTTP/JSON                             │
-└─────────────────────────────┼───────────────────────────────────────┘
-                              │
-┌─────────────────────────────▼───────────────────────────────────────┐
-│                    ASP.NET Core 8 API Host                          │
-│                                                                     │
-│  ┌──────────────┐  ┌───────────────────┐  ┌─────────────────────┐  │
-│  │  Core routes │  │   Plugin Loader   │  │   Swagger / OpenAPI │  │
-│  │  /api/plugins│  │  PluginDiscovery  │  │   (dev only)        │  │
-│  │  /api/health │  │  PluginExtensions │  └─────────────────────┘  │
-│  └──────────────┘  └─────────┬─────────┘                           │
-│                               │ loads                               │
-│  ┌────────────────────────────▼──────────────────────────────────┐  │
-│  │  Registered IPlugin implementations                          │  │
-│  │                                                               │  │
-│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────┐  │  │
-│  │  │ Scheduling │  │  Finances  │  │  Members   │  │  ...   │  │  │
-│  │  │  Plugin    │  │  Plugin    │  │  Plugin    │  │        │  │  │
-│  │  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘  └───┬───┘  │  │
-│  └────────┼───────────────┼───────────────┼──────────────┼──────┘  │
-│           │ EF Core ctx   │               │              │          │
-│           ▼               ▼               ▼              ▼          │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │         Database (SQLite / SQL Server / PostgreSQL)         │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         Browser / Client                              │
+│                                                                       │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │                    SvelteKit Frontend (CSR SPA)                │   │
+│  │                                                                │   │
+│  │  ┌──────────┐  ┌─────────────────┐  ┌──────────────────────┐  │   │
+│  │  │ NavBar   │  │  Dashboard page │  │  Module pages        │  │   │
+│  │  └──────────┘  └─────────────────┘  └──────────────────────┘  │   │
+│  │                                                                │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐ │   │
+│  │  │ Block Editor │  │  D3 Graphs   │  │  Mattermost Chat    │ │   │
+│  │  │ (ADR-005)    │  │              │  │                      │ │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────────────┘ │   │
+│  │                                                                │   │
+│  │  API Client (REST) ─── WebSocket Client (realtime)            │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+│              │ HTTP/JSON + WebSocket                                   │
+└──────────────┼────────────────────────────────────────────────────────┘
+               │
+┌──────────────▼────────────────────────────────────────────────────────┐
+│                        Directus 11 (Backend)                          │
+│                                                                       │
+│  ┌────────────────┐  ┌───────────────────┐  ┌─────────────────────┐  │
+│  │  REST API      │  │  Admin Panel      │  │  GraphQL API        │  │
+│  │  /items/{col}  │  │  /admin           │  │  /graphql           │  │
+│  └────────────────┘  └───────────────────┘  └─────────────────────┘  │
+│                                                                       │
+│  ┌────────────────┐  ┌───────────────────┐  ┌─────────────────────┐  │
+│  │  Auth & RBAC   │  │  File Storage     │  │  WebSockets         │  │
+│  │  (built-in)    │  │  (built-in)       │  │  (native)           │  │
+│  └────────────────┘  └───────────────────┘  └─────────────────────┘  │
+│                                                                       │
+│  ┌────────────────┐  ┌───────────────────┐  ┌─────────────────────┐  │
+│  │  Extensions    │  │  Webhooks &       │  │  Schema Snapshots   │  │
+│  │  (hooks,       │  │  Flows            │  │  (version control)  │  │
+│  │   endpoints)   │  │                   │  │                     │  │
+│  └────────────────┘  └───────────────────┘  └─────────────────────┘  │
+│                               │                                       │
+│  ┌────────────────────────────▼───────────────────────────────────┐   │
+│  │           Database (SQLite / PostgreSQL / MySQL)               │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -62,18 +68,46 @@
 ## Request Flow — Loading the Dashboard
 
 ```
-Browser                         SvelteKit                    ASP.NET API
+Browser                         SvelteKit                    Directus API
   │                                │                              │
   │── navigate to /  ──────────────▶                              │
   │                             +layout.svelte mounts             │
-  │                             loadPlugins() called              │
-  │                                │── GET /api/plugins ─────────▶│
-  │                                │                         returns list of
-  │                                │                         PluginManifest[]
+  │                             loadModules() called              │
+  │                                │                              │
+  │                                │── GET /items/governance_modules ──▶│
+  │                                │                         returns   │
+  │                                │                         { data: [...] }
   │                                │◀── 200 JSON ────────────────│
-  │                             plugins store updated             │
+  │                             modules store updated             │
+  │                             (snake_case → camelCase)          │
   │                             NavBar + Dashboard rendered       │
-  │◀── HTML with plugin cards ─────│                              │
+  │◀── rendered SPA ───────────────│                              │
+  │                                │                              │
+  │    (user opens Meetings)       │                              │
+  │── navigate to /modules/meetings ▶                             │
+  │                                │── GET /items/meetings ──────▶│
+  │                                │◀── 200 JSON ────────────────│
+  │◀── rendered meeting list ──────│                              │
+```
+
+---
+
+## Data Flow Diagram
+
+```
+ ┌─────────────┐     REST / GraphQL     ┌──────────────┐     SQL      ┌──────────┐
+ │  SvelteKit  │ ◀────────────────────▶ │   Directus   │ ◀──────────▶ │ Database │
+ │  Frontend   │                        │   Server     │              │ (SQLite/ │
+ │  (browser)  │     WebSocket          │              │              │  PG/MySQL│
+ │             │ ◀────────────────────▶ │              │              │  )       │
+ └─────────────┘                        └──────────────┘              └──────────┘
+                                              │
+                                              │ Webhooks / Flows
+                                              ▼
+                                        ┌──────────────┐
+                                        │  External    │
+                                        │  Services    │
+                                        └──────────────┘
 ```
 
 ---
@@ -82,41 +116,48 @@ Browser                         SvelteKit                    ASP.NET API
 
 | Decision | Choice | Reason |
 |---|---|---|
-| Backend framework | ASP.NET Core 8 (minimal-API style) | Strong typing, performance, wide ecosystem |
-| Frontend framework | SvelteKit | Lightweight, reactive, beginner-friendly |
-| Plugin model | DI-based `IPlugin` contract | No MEF complexity; discoverable, testable |
-| Database strategy | EF Core + provider swap | Single config change to switch providers |
-| Plugin discovery | Assembly scan + directory probe | No XML manifests; works at compile and runtime |
-| Authentication | Not included in prototype | Would add scope; marked as future work |
+| Backend platform | Directus 11 headless CMS (ADR-006) | No custom backend code; instant REST + GraphQL APIs |
+| Frontend framework | SvelteKit (CSR SPA, `adapter-static`) (ADR-004) | Lightweight, reactive, beginner-friendly |
+| Content modelling | Directus collections | Visual admin panel; schema snapshots for version control |
+| Database strategy | Directus-managed (SQLite/PostgreSQL/MySQL) | Single `.env` change to switch providers |
+| Authentication | Directus built-in (email/password, OAuth, SSO, tokens) | No custom auth code required |
+| Authorisation | Directus built-in RBAC | Visual role/permission editor in admin panel |
+| Real-time | Directus native WebSockets (`WEBSOCKETS_ENABLED=true`) | Push updates without polling |
+| Block editor | Custom block framework (ADR-005) | Extensible, WCAG 2.0 AA, editor-agnostic |
 
 ---
 
 ## Layer Responsibilities
 
-### `GovernancePortal.Core`
+### Directus Backend (`src/backend/`)
 
-- Defines `IPlugin` — the single interface every plugin must implement.
-- Defines `PluginDbContext` — the base EF Core context plugins should extend.
-- Defines `PluginManifest` — the JSON-serialisable plugin descriptor.
-- Has **no dependency** on any specific plugin or database provider.
+- **REST API** — Automatic CRUD endpoints at `/items/{collection}` for every
+  collection (e.g. `/items/governance_modules`, `/items/meetings`).
+- **GraphQL API** — Full GraphQL endpoint at `/graphql`.
+- **Admin panel** — Visual interface at `/admin` for managing collections,
+  fields, roles, permissions, and content.
+- **Authentication** — Built-in email/password, OAuth 2.0, SSO, and static
+  API tokens.
+- **RBAC** — Role-based access control with per-collection, per-field
+  permissions configured in the admin panel.
+- **File storage** — Built-in asset management with configurable storage
+  adapters (local, S3, etc.).
+- **WebSockets** — Native real-time subscriptions for collection changes.
+- **Schema snapshots** — Export/apply schema as YAML for version control
+  (`src/backend/snapshots/schema.yaml`).
+- **Extensions** — Custom hooks, endpoints, and operations when built-in
+  features are insufficient.
 
-### `GovernancePortal.Api`
+### SvelteKit Frontend (`src/frontend/`)
 
-- Hosts the ASP.NET Core web application.
-- Discovers plugins via `PluginDiscovery.Discover()`.
-- Calls `ConfigureServices()` then `MapEndpoints()` on each plugin.
-- Exposes `GET /api/plugins` and `GET /api/health` as core endpoints.
-
-### `GovernancePortal.Plugins.*`
-
-- Each implements `IPlugin`.
-- Registers its own DI services in `ConfigureServices()`.
-- Registers its own minimal-API endpoints in `MapEndpoints()`.
-- May define its own EF Core `DbContext` that extends `PluginDbContext`.
-
-### SvelteKit Frontend
-
-- Fetches plugin manifests from `GET /api/plugins` on startup.
-- Renders navigation and dashboard cards dynamically from that list.
-- Each plugin page (`/plugins/[pluginId]`) can render a plugin-specific
-  Svelte component loaded lazily from a client-side registry.
+- Runs as a **pure CSR single-page application** (`adapter-static`,
+  `ssr=false`).
+- Fetches governance module metadata from `GET /items/governance_modules` on
+  startup and stores it in a Svelte writable store.
+- Normalises Directus `{ data: [...] }` envelope responses and converts
+  `snake_case` field names to `camelCase`.
+- Renders navigation, dashboard cards, and module pages dynamically.
+- Provides the block editor framework (ADR-005) for rich content editing.
+- Integrates D3.js graph visualisations as an optional block editor plugin.
+- Integrates Mattermost chat via `$lib/chat`.
+- Connects to Directus WebSockets for real-time updates via `$lib/realtime`.

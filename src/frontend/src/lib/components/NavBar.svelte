@@ -1,10 +1,10 @@
 <!--
   components/NavBar.svelte — Top navigation bar.
 
-  Dynamically renders a link for every registered plugin so new plugins
-  automatically appear in the nav without frontend code changes.
+  Dynamically renders a link for every governance module so new modules
+  added in Directus automatically appear in the nav.
 
-  Traceability: ADR-004
+  Traceability: ADR-004, ADR-006
 -->
 <script lang="ts">
   import { plugins } from '$lib/plugins/registry';
@@ -18,7 +18,7 @@
     </a>
   </div>
 
-  <nav class="navbar-links" aria-label="Plugin navigation">
+  <nav class="navbar-links" aria-label="Module navigation">
     {#each $plugins as plugin (plugin.pluginId)}
       <a
         href="/plugins/{plugin.pluginId}"

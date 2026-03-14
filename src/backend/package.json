@@ -1,0 +1,19 @@
+{
+  "name": "open-governance-portal-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open Governance Portal — Directus headless CMS backend",
+  "scripts": {
+    "dev": "npx directus start",
+    "start": "npx directus start",
+    "bootstrap": "npx directus bootstrap",
+    "schema:snapshot": "npx directus schema snapshot ./snapshots/schema.yaml --format yaml",
+    "schema:apply": "npx directus schema apply ./snapshots/schema.yaml"
+  },
+  "dependencies": {
+    "directus": "^11.16.1"
+  },
+  "engines": {
+    "node": ">=18.0.0 <=22.x.x"
+  }
+}

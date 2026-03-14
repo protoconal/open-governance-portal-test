@@ -1,11 +1,11 @@
 <!--
-  components/PluginCard.svelte — Dashboard card for a single plugin.
+  components/PluginCard.svelte — Dashboard card for a governance module.
 
   Props
   ─────
-  manifest  PluginManifest  The plugin's metadata from the backend.
+  manifest  PluginManifest  The module's metadata from Directus.
 
-  Traceability: ADR-004
+  Traceability: ADR-004, ADR-006
 -->
 <script lang="ts">
   import type { PluginManifest } from '$lib/api/client';

@@ -1,7 +1,7 @@
 # Open Governance Portal
 
-A **modular, plugin-based web governance platform** built with an
-**ASP.NET Core 8** backend and a **Svelte / SvelteKit** frontend.
+A **web-based governance platform** powered by a **Directus 11** headless CMS
+backend and a **SvelteKit** single-page application frontend.
 
 ---
 
@@ -9,16 +9,15 @@ A **modular, plugin-based web governance platform** built with an
 
 Open Governance Portal provides a single web-based interface for an
 organisation's governance needs — meetings, finances, member management, and
-any other module that can be expressed as a plugin.
+any other module that can be modelled as a Directus collection.
 
-The project is deliberately designed around two principles:
+The project is built around two principles:
 
-1. **Bring Your Own Database** — no specific database is required.  SQLite
-   works out of the box; SQL Server and PostgreSQL are one configuration line
-   away.
-2. **Plugin-first** — every functional module is a plugin.  New capabilities
-   can be added by dropping a `.dll` into the plugins folder and restarting the
-   API, with no source changes required.
+1. **Bring Your Own Database** — SQLite works out of the box; PostgreSQL and
+   MySQL/MariaDB are one `.env` change away.
+2. **Content-model-first** — every governance module is a Directus collection.
+   New modules are added through the Directus admin panel — no custom backend
+   code required (ADR-006).
 
 ---
 
@@ -28,29 +27,32 @@ The project is deliberately designed around two principles:
 open-governance-portal/
 ├── docs/                          # Architecture and design documentation
 │   ├── ARCHITECTURE.md            # System architecture overview
-│   ├── PLUGIN_SYSTEM.md           # How to build and distribute plugins
-│   ├── DATABASE_SETUP.md          # "Bring your own database" guide
+│   ├── BLOCK_EDITOR.md            # Block editor framework guide
+│   ├── CONTENT_MODEL.md           # Content model & collections guide
+│   ├── DATABASE_SETUP.md          # Database configuration guide
 │   ├── DESIGN_DECISIONS.md        # Architecture Decision Records (ADRs)
 │   └── GETTING_STARTED.md         # Quick-start guide
 │
 └── src/
-    ├── backend/                   # ASP.NET Core 8 solution
-    │   ├── GovernancePortal.Core               # Shared interfaces + base classes
-    │   ├── GovernancePortal.Api                # Web API host + plugin loader
-    │   ├── GovernancePortal.Plugins.Scheduling # Sample plugin — meetings
-    │   ├── GovernancePortal.Plugins.Finances   # Sample plugin — transactions
-    │   └── GovernancePortal.Plugins.Members    # Sample plugin — member directory
+    ├── backend/                   # Directus 11 headless CMS
+    │   ├── .env.example           # Environment template
+    │   ├── package.json           # Directus dependency
+    │   ├── extensions/            # Custom Directus extensions (hooks, endpoints)
+    │   └── snapshots/
+    │       └── schema.yaml        # Schema snapshot for version control
     │
-    └── frontend/                  # SvelteKit application
+    └── frontend/                  # SvelteKit application (CSR SPA)
         └── src/
             ├── lib/
-            │   ├── api/           # Typed API client
+            │   ├── api/           # Directus API client (REST)
             │   ├── components/    # Shared Svelte components
-            │   └── plugins/       # Client-side plugin registry
+            │   ├── block-editor/  # Block editor framework (ADR-005)
+            │   ├── chat/          # Mattermost chat integration
+            │   └── realtime/      # WebSocket client
             └── routes/
-                ├── +layout.svelte # Root layout (NavBar, plugin load)
+                ├── +layout.svelte # Root layout (NavBar)
                 ├── +page.svelte   # Dashboard
-                └── plugins/[pluginId]/+page.svelte  # Generic plugin page
+                └── modules/       # Governance module pages
 ```
 
 ---
@@ -61,29 +63,42 @@ See **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** for the full guide.
 
 ### Prerequisites
 
-| Tool        | Minimum version |
-|-------------|-----------------|
-| .NET SDK    | 8.0             |
-| Node.js     | 18              |
-| npm         | 9               |
+| Tool    | Version  |
+|---------|----------|
+| Node.js | 18–22 LTS |
+| npm     | 9+       |
 
-### 1 — Start the backend
+### 1 — Start the backend (Directus)
 
 ```bash
-cd src/backend/GovernancePortal.Api
-dotnet run
-# API available at http://localhost:5000
-# Swagger UI at  http://localhost:5000/swagger
+cd src/backend
+cp .env.example .env          # configure secrets and DB
+npm install
+npx directus bootstrap        # initialise database & admin user
+npm run dev                    # http://localhost:8055
 ```
 
-### 2 — Start the frontend
+### 2 — Start the frontend (SvelteKit)
 
 ```bash
 cd src/frontend
+cp .env.example .env           # set VITE_API_BASE_URL=http://localhost:8055
 npm install
-npm run dev
-# UI available at http://localhost:5173
+npm run dev                    # http://localhost:5173
 ```
+
+---
+
+## Tech Stack
+
+| Layer     | Technology                  | Purpose                              |
+|-----------|-----------------------------|--------------------------------------|
+| Backend   | Directus 11                 | Headless CMS, REST + GraphQL API, admin panel, auth, RBAC |
+| Frontend  | SvelteKit (`adapter-static`, `ssr=false`) | CSR single-page application |
+| Database  | SQLite (default) / PostgreSQL / MySQL | Relational storage via Directus      |
+| Graphing  | D3.js                       | Interactive data visualisations       |
+| Chat      | Mattermost                  | Integrated team communication         |
+| Editor    | Block editor (ADR-005)      | WYSIWYG document editing              |
 
 ---
 
@@ -92,34 +107,26 @@ npm run dev
 | Document | Description |
 |---|---|
 | [Architecture](docs/ARCHITECTURE.md) | System overview, component diagram, data flow |
-| [Plugin System](docs/PLUGIN_SYSTEM.md) | How plugins work, how to write one |
+| [Content Model](docs/CONTENT_MODEL.md) | Directus collections, schema snapshots, extensions |
 | [Database Setup](docs/DATABASE_SETUP.md) | Switching database providers |
 | [Design Decisions](docs/DESIGN_DECISIONS.md) | Architecture Decision Records (ADRs) |
 | [Getting Started](docs/GETTING_STARTED.md) | Step-by-step setup guide |
+| [Block Editor](docs/BLOCK_EDITOR.md) | Block-based WYSIWYG editor framework |
 
 ---
 
-## Conflicts and Known Limitations
-
-The following items may be surprising for a beginner developer and are called
-out explicitly:
+## Notes for Beginners
 
 1. **SvelteKit vs "plain Svelte"** — SvelteKit is the official meta-framework
-   for Svelte.  It provides routing, server-side rendering, and build tooling.
-   Using plain Svelte would require significantly more manual setup.
+   for Svelte.  It provides routing and build tooling.  The app is configured
+   as a client-side rendered (CSR) SPA using `adapter-static` and `ssr=false`.
 
-2. **In-memory stores in sample plugins** — The three sample plugins use
-   in-memory data stores.  Data is lost on API restart.  This is intentional
-   for the prototype; see [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md) to
-   connect real database storage.
+2. **Directus admin panel** — After running `npx directus bootstrap`, open
+   `http://localhost:8055/admin` to manage collections, permissions, and
+   content through a visual interface.
 
-3. **No authentication** — Authentication and authorisation are not included in
-   this prototype.  Adding them is documented as a future ADR in
-   [docs/DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md).
-
-4. **Adapter-auto warning** — SvelteKit prints a warning about `adapter-auto`
-   during build.  This is normal; see
-   [Getting Started](docs/GETTING_STARTED.md) for deployment adapter options.
+3. **Authentication is built in** — Directus provides email/password, OAuth,
+   SSO, and API token authentication out of the box (ADR-006).
 
 ---
 

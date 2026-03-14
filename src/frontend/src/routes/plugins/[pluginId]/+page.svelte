@@ -1,17 +1,16 @@
 <!--
-  routes/plugins/[pluginId]/+page.svelte — Generic plugin module page.
+  routes/plugins/[pluginId]/+page.svelte — Governance module page.
 
-  This single route handles ALL plugins.  The page:
-    1. Looks up the plugin manifest from the store by ID.
-    2. Displays the plugin's name, description, and API endpoint information.
-    3. Provides a link to the raw JSON endpoint so developers can explore
-       the plugin's data during development.
+  This single route handles ALL governance modules.  The page:
+    1. Looks up the module manifest from the store by moduleId.
+    2. Displays the module's name, description, and Directus API information.
+    3. Provides a link to the Directus admin panel for content management.
 
-  In a fully-built application, this page would dynamically import a plugin-
-  specific Svelte component (lazy-loaded from the public/plugins/ folder or
-  an npm package).  That capability is documented in docs/PLUGIN_SYSTEM.md.
+  In a fully-built application, this page would dynamically import a
+  module-specific Svelte component (e.g. a meetings calendar, finance
+  ledger, or member directory).
 
-  Traceability: ADR-004
+  Traceability: ADR-004, ADR-006
 -->
 <script lang="ts">
   import { page } from '$app/stores';
@@ -19,7 +18,7 @@
   import { API_BASE } from '$lib/api/client';
 
   $: pluginId = $page.params.pluginId;
-  $: manifest = $pluginMap.get(pluginId);
+  $: manifest = $pluginMap.get(pluginId ?? '');
 </script>
 
 <svelte:head>
@@ -30,8 +29,8 @@
   <p>Loading…</p>
 {:else if !manifest}
   <article class="not-found">
-    <h1>Plugin not found</h1>
-    <p>No plugin with ID <code>{pluginId}</code> is currently registered.</p>
+    <h1>Module not found</h1>
+    <p>No governance module with ID <code>{pluginId}</code> is currently registered.</p>
     <a href="/">← Back to Dashboard</a>
   </article>
 {:else}
@@ -45,28 +44,28 @@
     </header>
 
     <section class="api-info">
-      <h2>API Endpoints</h2>
+      <h2>Directus REST API</h2>
       <p>
-        This plugin exposes its endpoints at
-        <code class="endpoint">{API_BASE}{manifest.apiPrefix}/</code>.
+        This module's data is available via Directus at
+        <code class="endpoint">{API_BASE}{manifest.apiPrefix}</code>.
       </p>
       <a
-        href="{API_BASE}{manifest.apiPrefix}/swagger"
+        href="{API_BASE}/admin"
         class="api-link"
         target="_blank"
         rel="noopener noreferrer"
       >
-        View Swagger docs ↗
+        Open Directus Admin Panel ↗
       </a>
     </section>
 
     <!--
-      Plugin UI slot
+      Module UI slot
       ──────────────
-      In production, a plugin-specific component would be rendered here.
+      In production, a module-specific component would be rendered here
+      (e.g. a meetings calendar, finance ledger, member directory).
       The component would be loaded lazily by looking it up in a client-side
-      plugin registry that maps pluginId → Svelte component.
-      See docs/PLUGIN_SYSTEM.md § "Frontend Plugin Components" for details.
+      module registry that maps moduleId → Svelte component.
     -->
     <section class="plugin-ui-slot">
       <div class="slot-placeholder">
@@ -76,7 +75,7 @@
         </p>
         <p class="slot-hint">
           Register a Svelte component for <code>{pluginId}</code> in the
-          client-side plugin registry to replace this placeholder.
+          client-side module registry to replace this placeholder.
         </p>
       </div>
     </section>

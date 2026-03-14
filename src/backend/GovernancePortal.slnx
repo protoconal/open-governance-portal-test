@@ -1,7 +1,0 @@
-<Solution>
-  <Project Path="GovernancePortal.Api/GovernancePortal.Api.csproj" />
-  <Project Path="GovernancePortal.Core/GovernancePortal.Core.csproj" />
-  <Project Path="GovernancePortal.Plugins.Finances/GovernancePortal.Plugins.Finances.csproj" />
-  <Project Path="GovernancePortal.Plugins.Members/GovernancePortal.Plugins.Members.csproj" />
-  <Project Path="GovernancePortal.Plugins.Scheduling/GovernancePortal.Plugins.Scheduling.csproj" />
-</Solution>

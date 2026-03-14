@@ -1,27 +1,18 @@
-# ── .NET / C# ──────────────────────────────────────────────────────────────
-# Build outputs
-**/bin/
-**/obj/
-
-# NuGet packages (restored on build)
-**/packages/
-*.nupkg
-*.nuspec
-
-# User-specific files
-*.user
-*.suo
-.vs/
-
-# ── Node / Svelte ──────────────────────────────────────────────────────────
+# ── Node / SvelteKit / Directus ─────────────────────────────────────────────
 node_modules/
 .svelte-kit/
 build/
 dist/
 
+# Directus runtime data and uploads
+src/backend/data/
+src/backend/uploads/
+src/backend/extensions/
+
 # Environment files with secrets — keep only .env.example in source control
 src/frontend/.env.local
 src/frontend/.env.*.local
+src/backend/.env
 
 # ── SQLite databases ────────────────────────────────────────────────────────
 *.db
