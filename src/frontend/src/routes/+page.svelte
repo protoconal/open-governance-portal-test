@@ -1,11 +1,11 @@
 <!--
   routes/+page.svelte — Dashboard / home page.
 
-  Renders a grid of PluginCard components — one per registered plugin.
-  Because the grid is driven by the plugin store, no code change is
-  required when a new plugin is added to the backend.
+  Renders a grid of PluginCard components — one per registered governance
+  module.  Because the grid is driven by the module store, no code change
+  is required when a new module is added in Strapi.
 
-  Traceability: ADR-004
+  Traceability: ADR-004, ADR-006
 -->
 <script lang="ts">
   import PluginCard from '$lib/components/PluginCard.svelte';
@@ -27,7 +27,7 @@
   {:else if $plugins.length === 0}
     <p class="status empty">
       No modules are currently registered.
-      Check that the backend API is running and has plugins loaded.
+      Add governance modules in the Strapi admin panel at <code>/admin</code>.
     </p>
   {:else}
     <div class="plugin-grid" role="list" aria-label="Available governance modules">

@@ -1,35 +1,56 @@
 /**
- * plugins/registry.ts — Svelte store that holds all registered plugin manifests.
+ * plugins/registry.ts — Svelte store that holds all governance module manifests.
  *
  * Design rationale
  * ----------------
- * The frontend does NOT hard-code knowledge of specific plugins.  On startup
- * it calls GET /api/plugins, receives a list of PluginManifest objects, and
+ * The frontend does NOT hard-code knowledge of specific modules.  On startup
+ * it calls the Strapi API to fetch all GovernanceModule entries and
  * dynamically builds the navigation and dashboard cards from that list.
  *
- * This mirrors the backend's runtime plugin discovery (ADR-003) and means
- * adding a new backend plugin automatically adds it to the UI without any
- * frontend code change.
+ * Adding a new content type in Strapi and a corresponding GovernanceModule
+ * entry automatically adds it to the UI without any frontend code change.
  *
- * Traceability: ADR-004 — Frontend plugin registry
+ * Traceability: ADR-004 — Frontend module registry
+ *               ADR-006 — Migration to Strapi headless CMS
  */
 
 import { writable, derived } from 'svelte/store';
-import type { PluginManifest } from '$lib/api/client';
-import { fetchPlugins } from '$lib/api/client';
+import type { GovernanceModule, PluginManifest } from '$lib/api/client';
+import { fetchGovernanceModules, fetchPlugins } from '$lib/api/client';
 
 // ── Stores ────────────────────────────────────────────────────────────────
 
-/** All plugin manifests fetched from the backend. */
-export const plugins = writable<PluginManifest[]>([]);
+/** All governance modules fetched from Strapi. */
+export const modules = writable<GovernanceModule[]>([]);
 
-/** Whether the initial plugin load is in progress. */
+/**
+ * @deprecated Use `modules` store instead.
+ * Legacy alias mapping GovernanceModule → PluginManifest shape.
+ */
+export const plugins = derived(modules, ($modules) =>
+  $modules.map((m) => ({
+    ...m,
+    pluginId: m.moduleId,
+    apiPrefix: `/api/${m.moduleId}s`,
+  } as PluginManifest))
+);
+
+/** Whether the initial module load is in progress. */
 export const pluginsLoading = writable<boolean>(false);
 
-/** Error message if the plugin load failed, or null. */
+/** Error message if the module load failed, or null. */
 export const pluginsError = writable<string | null>(null);
 
-/** Convenience: a map from pluginId → manifest for O(1) lookup. */
+/** Convenience: a map from moduleId → GovernanceModule for O(1) lookup. */
+export const moduleMap = derived(
+  modules,
+  ($modules) => new Map($modules.map((m) => [m.moduleId, m]))
+);
+
+/**
+ * @deprecated Use `moduleMap` store instead.
+ * Legacy alias providing pluginId → PluginManifest lookup.
+ */
 export const pluginMap = derived(
   plugins,
   ($plugins) => new Map($plugins.map((p) => [p.pluginId, p]))
@@ -38,20 +59,20 @@ export const pluginMap = derived(
 // ── Actions ───────────────────────────────────────────────────────────────
 
 /**
- * Load plugins from the backend and populate the store.
+ * Load governance modules from Strapi and populate the store.
  * Safe to call multiple times — only one request will be in flight at a time.
  */
 export async function loadPlugins(): Promise<void> {
   pluginsLoading.set(true);
   pluginsError.set(null);
   try {
-    const manifests = await fetchPlugins();
-    plugins.set(manifests);
+    const items = await fetchGovernanceModules();
+    modules.set(items);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     pluginsError.set(message);
-    // Fall back to an empty plugin list so the app stays usable.
-    plugins.set([]);
+    // Fall back to an empty list so the app stays usable.
+    modules.set([]);
   } finally {
     pluginsLoading.set(false);
   }

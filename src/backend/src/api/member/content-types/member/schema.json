@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "members",
+  "info": {
+    "singularName": "member",
+    "pluralName": "members",
+    "displayName": "Member",
+    "description": "Members module — organisation member directory (replaces GovernancePortal.Plugins.Members)."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fullName": {
+      "type": "string",
+      "required": true,
+      "maxLength": 200
+    },
+    "email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    },
+    "role": {
+      "type": "string",
+      "maxLength": 100,
+      "default": "Member"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "joinedAt": {
+      "type": "date"
+    }
+  }
+}

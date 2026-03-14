@@ -3,18 +3,18 @@
 
   Responsibilities
   ────────────────
-  1. Load plugin manifests from the backend on first render.
+  1. Load governance module manifests from Strapi on first render.
   2. Render the persistent NavBar.
   3. Provide CSS custom properties (design tokens) used by all components.
 
-  Traceability: ADR-004
+  Traceability: ADR-004, ADR-006
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import NavBar from '$lib/components/NavBar.svelte';
   import { loadPlugins, pluginsError } from '$lib/plugins/registry';
 
-  // Kick off the plugin manifest load as soon as the layout mounts.
+  // Kick off the governance-module load as soon as the layout mounts.
   onMount(async () => {
     await loadPlugins();
   });
@@ -30,8 +30,8 @@
 
 {#if $pluginsError}
   <div class="global-error" role="alert">
-    ⚠️ Could not load plugins from the backend: {$pluginsError}.
-    Ensure the API is running at the configured address.
+    ⚠️ Could not load modules from Strapi: {$pluginsError}.
+    Ensure the backend is running at the configured address.
   </div>
 {/if}
 
