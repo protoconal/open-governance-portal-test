@@ -140,11 +140,69 @@ client-side registry (see `docs/PLUGIN_SYSTEM.md`).
 
 ---
 
+## ADR-005 — Block Editor: Extensible Block-Based WYSIWYG Framework
+
+**Status:** Accepted
+
+**Context**
+
+The portal needs a way for users to compose rich, structured content —
+meeting minutes, policy documents, reports with embedded visualisations,
+etc.  Requirements:
+
+- Block-based editing (ordered list of typed content units).
+- Interchangeable WYSIWYG editors (currently Milkdown and TinyMCE).
+- Extensible block type registry so plugins can add custom blocks.
+- WCAG 2.0 Level AA compliance throughout.
+- Optional heavyweight blocks (e.g. D3.js graph) that are not bundled
+  by default.
+
+**Decision**
+
+Introduce a `block-editor` library under `src/frontend/src/lib/block-editor/`
+with the following architecture:
+
+1. **Core types** — `Block`, `BlockDocument`, `BlockDefinition` expressed as
+   TypeScript interfaces.
+2. **Block registry** — A Svelte store where block types are registered at
+   runtime.  Built-in types (text, heading, image, code) are always
+   available; optional types (D3 graph) are imported and registered
+   separately.
+3. **Editor adapter ABI** — An `EditorAdapter` interface that any WYSIWYG
+   engine can implement: `init()`, `destroy()`, `getContent()`,
+   `setContent()`, `onContentChange()`, `focus()`.  Three adapters ship:
+   built-in `contenteditable`, Milkdown, and TinyMCE.
+4. **Svelte store** — A `blockDocument` writable store with CRUD actions
+   (`addBlock`, `removeBlock`, `moveBlock`, `updateBlockData`) that emit
+   ARIA live-region announcements for screen readers.
+5. **Serialiser** — `documentToHTML()` and `documentToJSON()` for export;
+   `documentFromJSON()` for import.
+6. **UI components** — `BlockEditor`, `BlockToolbar`, `BlockWrapper`,
+   `EditorSelector` Svelte components with full keyboard support and ARIA.
+7. **Plugin pattern** — Optional blocks live under `plugins/` and are never
+   imported by the core.  The D3.js graph block demonstrates this pattern.
+
+**Consequences**
+
+- ✅ New block types can be added without modifying the core framework.
+- ✅ Editor engines can be swapped at runtime via the adapter registry.
+- ✅ WCAG 2.0 AA compliance is enforced at the framework level (live
+  announcements, focus management, semantic HTML, keyboard shortcuts).
+- ✅ Optional plugins keep the base bundle lightweight.
+- ⚠️ The adapter ABI uses HTML strings as the interchange format, which
+  works for all current editors but may lose rich formatting details
+  specific to a single editor (e.g. Milkdown's internal Markdown AST).
+- ⚠️ Collaborative editing is not yet supported (planned future extension).
+
+See `docs/BLOCK_EDITOR.md` for the full architecture guide.
+
+---
+
 ## Future ADRs (Planned)
 
 | ID | Topic |
 |---|---|
-| ADR-005 | Authentication and authorisation (JWT / OAuth2) |
-| ADR-006 | Role-based access control per plugin |
-| ADR-007 | Real-time notifications (SignalR vs. polling) |
-| ADR-008 | Plugin marketplace and versioning |
+| ADR-006 | Authentication and authorisation (JWT / OAuth2) |
+| ADR-007 | Role-based access control per plugin |
+| ADR-008 | Real-time notifications (SignalR vs. polling) |
+| ADR-009 | Plugin marketplace and versioning |
